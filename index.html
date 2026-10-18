@@ -892,21 +892,23 @@ button.is-pressed,button:active{transform:scale(.96)!important;filter:brightness
   #titleOverlay .titleLogoSvg{width:min(100%, 360px);margin:0 auto}
 }
 @media (prefers-reduced-motion:reduce){#titleOverlay .titleLogoSvg{filter:none}}
-/* ===== #FS: botón SCI-FI de pantalla completa (arriba-izquierda, escenas) ===== */
+/* ===== #FS: botón SCI-FI de pantalla completa (arriba-izquierda) =====
+SOLO icono (sin texto) y SOLO visible en pausa o durante la cinemática. */
 #btnFullscreenFs{position:fixed;top:12px;left:12px;z-index:60;pointer-events:auto;
-display:inline-flex;align-items:center;gap:7px;padding:7px 11px;cursor:pointer;
-font-family:inherit;font-size:9px;letter-spacing:.2em;color:#d8f4ff;
+display:none;align-items:center;justify-content:center;width:32px;height:32px;padding:0;cursor:pointer;
+font-family:inherit;color:#d8f4ff;
 background:linear-gradient(160deg,rgba(10,26,42,.88),rgba(4,10,18,.92));
 border:1px solid rgba(99,230,255,.4);
-clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
 box-shadow:0 0 14px rgba(0,0,0,.5),inset 0 0 14px rgba(99,230,255,.06);
 transition:border-color .15s ease,box-shadow .15s ease,color .15s ease}
+#btnFullscreenFs.show{display:inline-flex}
 #btnFullscreenFs .ui-icon{width:15px;height:15px;color:var(--cyan);filter:drop-shadow(0 0 5px currentColor)}
 #btnFullscreenFs:hover{border-color:rgba(99,230,255,.85);color:#fff;
 box-shadow:0 0 18px rgba(99,230,255,.35),inset 0 0 18px rgba(99,230,255,.12)}
 #btnFullscreenFs.on{border-color:rgba(94,240,139,.6)}
 #btnFullscreenFs.on .ui-icon{color:var(--green)}
-@media (pointer:coarse){#btnFullscreenFs{top:8px;left:8px;padding:9px 12px}}
+@media (pointer:coarse){#btnFullscreenFs{top:8px;left:8px;width:38px;height:38px}}
 </style>
 </head>
 <body>
@@ -952,8 +954,8 @@ box-shadow:0 0 18px rgba(99,230,255,.35),inset 0 0 18px rgba(99,230,255,.12)}
 <symbol id="i-fullscreen" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
 <symbol id="i-exit-fullscreen" viewBox="0 0 24 24"><path d="M3 8h3a2 2 0 0 0 2-2V3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/></symbol>
 </svg>
-<!-- #FS: botón SCI-FI de pantalla completa — arriba a la izquierda, visible en las escenas -->
-<button id="btnFullscreenFs" type="button" aria-label="Pantalla completa" title="Pantalla completa" aria-pressed="false"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use id="fsIconUse" href="#i-fullscreen"/></svg><span id="fsBtnLbl">FULLSCREEN</span></button>
+<!-- #FS: botón SCI-FI de pantalla completa — arriba a la izquierda, SOLO icono; visible únicamente en pausa o cinemática -->
+<button id="btnFullscreenFs" type="button" aria-label="Pantalla completa" title="Pantalla completa" aria-pressed="false"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use id="fsIconUse" href="#i-fullscreen"/></svg></button>
 <canvas id="scene"></canvas>
 <div id="vignette"></div>
 <div id="hitflash"></div>
@@ -1397,13 +1399,14 @@ const be=$('btnLangEs'),bn=$('btnLangEn');
 if(be)be.classList.toggle('active',LANG==='es');
 if(bn)bn.classList.toggle('active',LANG==='en');
 const sk=$('cinSkip');if(sk)sk.textContent=t('skip');
-/* #FS: localización del botón de pantalla completa */
+/* #FS: localización del botón de pantalla completa (SOLO icono: aria-label/title) */
 {
-const fsB=$('btnFullscreenFs'),fsL=$('fsBtnLbl');
-if(fsB&&fsL){
+const fsB=$('btnFullscreenFs');
+if(fsB){
 const inFs=document.fullscreenElement||document.webkitFullscreenElement;
-fsL.textContent=t(inFs?'fsExit':'fsBtn');
-fsB.setAttribute('aria-label',t(inFs?'fsExit':'fsBtn'));
+const lbl=t(inFs?'fsExit':'fsBtn');
+fsB.setAttribute('aria-label',lbl);
+fsB.setAttribute('title',lbl);
 }
 }
 if(applyLangHook)applyLangHook();
@@ -3567,6 +3570,8 @@ $('statDrones').textContent=S.dronesKilled;
 $('statBest').textContent=S.best;
 $('endOverlay').classList.remove('hidden');
 if(document.pointerLockElement)document.exitPointerLock();
+/* #FS: pantalla final (no pausa/cinemática) → ocultar botón fullscreen */
+try{if(window.__FS&&typeof window.__FS.sync==='function')window.__FS.sync();}catch(e){}
 }
 function setPhase(n,instant){
 S.phase=n;
@@ -3647,6 +3652,8 @@ $('pauseOverlay').classList.add('hidden');
 $('endOverlay').classList.add('hidden');
 $('hud').classList.remove('hidden');
 if(isTouch)$('touchUI').classList.remove('hidden');
+/* #FS: al jugar ya no está en pausa/cinemática → ocultar botón fullscreen */
+try{if(window.__FS&&typeof window.__FS.sync==='function')window.__FS.sync();}catch(e){}
 await compileScene();
 lockPointer();
 }
@@ -3666,6 +3673,8 @@ $('titleOverlay').classList.remove('hidden');
 $('titleBestText').textContent=t('bestRun')+S.best;
 if(document.pointerLockElement)document.exitPointerLock();
 applyLang();
+/* #FS: en el título no hay pausa ni cinemática → ocultar botón fullscreen */
+try{if(window.__FS&&typeof window.__FS.sync==='function')window.__FS.sync();}catch(e){}
 armIdle();
 }
 function pauseGame(){
@@ -3680,6 +3689,8 @@ S.pauseTok=(S.pauseTok||0)+1;
 const _ptok=S.pauseTok;
 setTimeout(function(){if(S.state==='paused'&&_ptok===S.pauseTok)audio.suspend();},700);
 if(document.pointerLockElement)document.exitPointerLock();
+/* #FS: en pausa SÍ debe verse el botón de pantalla completa */
+try{if(window.__FS&&typeof window.__FS.sync==='function')window.__FS.sync();}catch(e){}
 }
 function resumeGame(){
 if(S.state!=='paused')return;
@@ -3690,6 +3701,8 @@ if(isTouch)$('touchUI').classList.remove('hidden');
 audio.resume();
 musicDuck(1,.6);
 lockPointer();
+/* #FS: al reanudar ya no está en pausa → ocultar botón fullscreen */
+try{if(window.__FS&&typeof window.__FS.sync==='function')window.__FS.sync();}catch(e){}
 }
 const keys={};
 window.addEventListener('keydown',function(e){
@@ -4554,21 +4567,36 @@ saveSettings();applyLight();syncSettingsUI();
 });
 $('btnLangEs').addEventListener('click',function(){setLang('es');});
 /* ===== #FS: botón SCI-FI de pantalla completa (arriba-izquierda) =====
-Entra/sale de fullscreen; en táctil además re-bloquea Landscape. El icono y
-la etiqueta reflejan el estado actual (se sincroniza con fullscreenchange). */
+Entra/sale de fullscreen; en táctil además re-bloquea Landscape. SOLO icono
+(sin texto visible): el estado se refleja en el href del <use>, aria-label y
+title. Visibilidad: el botón SOLO aparece cuando el juego está en PAUSA o
+mientras se está viendo la CINEMÁTICA (intro/outro). */
 {
-const fsBtn=$('btnFullscreenFs'),fsUse=$('fsIconUse'),fsLbl=$('fsBtnLbl');
+const fsBtn=$('btnFullscreenFs'),fsUse=$('fsIconUse');
 function fsActive(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+/* ¿Debe verse el botón? Solo en pausa o cinemática. Se comprueba de forma
+tolerante para funcionar tanto antes como después de inicializarse el juego. */
+function fsShouldShow(){
+try{
+if(typeof S!=='undefined'&&S){
+if(S.state==='paused')return true;
+if(S.state==='cinematic')return true;
+if(typeof cin!=='undefined'&&cin&&cin.active===true)return true;
+}
+}catch(e){}
+return false;
+}
 function syncFsBtn(){
 if(!fsBtn)return;
 const on=fsActive();
 fsBtn.classList.toggle('on',on);
 fsBtn.setAttribute('aria-pressed',on?'true':'false');
 if(fsUse)fsUse.setAttribute('href',on?'#i-exit-fullscreen':'#i-fullscreen');
-if(fsLbl){
-fsLbl.textContent=t(on?'fsExit':'fsBtn');
-fsBtn.setAttribute('aria-label',t(on?'fsExit':'fsBtn'));
-}
+const lbl=t(on?'fsExit':'fsBtn');
+fsBtn.setAttribute('aria-label',lbl);
+fsBtn.setAttribute('title',lbl);
+/* visibilidad controlada: solo pausa / cinemática */
+fsBtn.classList.toggle('show',fsShouldShow());
 }
 window.__FS={sync:syncFsBtn};
 if(fsBtn){
@@ -5785,11 +5813,15 @@ const f=$('cinFade');
 f.style.transition='opacity .6s';
 f.style.opacity='0';
 audio.sfx('swell');
+/* #FS: durante la cinemática SÍ debe verse el botón de pantalla completa */
+try{if(window.__FS&&typeof window.__FS.sync==='function')window.__FS.sync();}catch(e){}
 }
 function endCinematic(){
 if(!cin.active||cin.fadeBusy)return;
 cin.fadeBusy=true;
 resetSkipHold();
+/* #FS: al terminar la cinemática se oculta el botón (vuelve al título) */
+try{if(window.__FS&&typeof window.__FS.sync==='function')window.__FS.sync();}catch(e){}
 const f=$('cinFade');
 f.style.transition='opacity .6s';
 f.style.opacity='1';
